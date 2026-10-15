@@ -1,0 +1,37 @@
+{
+  "name": "amaya-paywall",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Тестовое задание: мобильный paywall детской игры (Nuxt 4 + TypeScript)",
+  "scripts": {
+    "dev": "nuxt dev",
+    "build": "npm run build-storybook && nuxt build",
+    "preview": "nuxt preview",
+    "postinstall": "nuxt prepare",
+    "typecheck": "nuxt typecheck",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "storybook": "storybook dev -p 6006 --no-open",
+    "build-storybook": "storybook build -o public/storybook"
+  },
+  "dependencies": {
+    "@fontsource-variable/nunito": "^5.3.0",
+    "@neondatabase/serverless": "^1.2.0",
+    "nuxt": "^4.6.1",
+    "vue": "^3.5.44"
+  },
+  "devDependencies": {
+    "@nuxt/eslint": "^1.17.0",
+    "@storybook/vue3-vite": "^10.6.2",
+    "@types/node": "^24.19.2",
+    "@vitejs/plugin-vue": "^6.0.10",
+    "eslint": "^10.12.0",
+    "storybook": "^10.6.2",
+    "typescript": "^6.0.0",
+    "vue-tsc": "^3.3.13"
+  },
+  "engines": {
+    "node": "^22.22.3 || ^24.15.0 || >=26.0.0"
+  }
+}

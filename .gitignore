@@ -1,0 +1,17 @@
+node_modules
+.nuxt
+.output
+.nitro
+.cache
+dist
+
+# Сборка витрины Storybook — артефакт, кладётся в деплой шагом npm run build
+public/storybook
+storybook-static
+
+.env
+.env.*
+!.env.example
+
+.DS_Store
+*.log
