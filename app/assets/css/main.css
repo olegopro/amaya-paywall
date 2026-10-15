@@ -1,0 +1,91 @@
+/*
+  Токены оформления и база. Компоненты ссылаются только на переменные,
+  поэтому палитру можно менять в одном месте.
+*/
+:root {
+  /* Фон и поверхности */
+  --bg: #f5f2ff;
+  --surface: #ffffff;
+  --surface-muted: #f7f5ff;
+
+  /* Текст */
+  --text: #241b4d;
+  --text-muted: #6c6790;
+  --text-soft: #8f8ab0;
+
+  /* Акценты */
+  --brand: #6b4bf2;
+  --brand-strong: #5936e8;
+  --brand-soft: #efe9ff;
+  --border: #e6e0f7;
+  --border-strong: #d7cdf4;
+
+  /* Цвета состояний. Затемнены до контраста ≥ 4.5:1 на своих светлых подложках —
+     текст на экране читается на солнце и при слабом зрении. */
+  --accent: #b3510a;
+  --accent-soft: #fff1e2;
+  --success: #0d7a53;
+  --success-soft: #e6f7f0;
+  --danger: #b62b30;
+  --danger-soft: #fdecec;
+
+  /* Форма и тени */
+  --radius-card: 20px;
+  --radius-pill: 999px;
+  --shadow-card: 0 6px 20px rgba(36, 27, 77, 0.07);
+  --shadow-cta: 0 10px 22px rgba(107, 75, 242, 0.3);
+
+  /* Минимальная зона нажатия: рекомендации Apple и Google — от 44 px */
+  --tap: 48px;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Nunito Variable', 'Nunito', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  font-size: 16px;
+  line-height: 1.45;
+  -webkit-font-smoothing: antialiased;
+  /* В webview подсветка нажатия и «резинка» скролла выглядят как чужие элементы интерфейса */
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior-y: none;
+}
+
+button {
+  margin: 0;
+  padding: 0;
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+
+/* Общий видимый фокус — экран должен быть проходим с клавиатуры и с экранным диктором */
+:focus-visible {
+  outline: 3px solid var(--brand);
+  outline-offset: 2px;
+}
+
+/* Анимации отключаются, если в системе включён режим уменьшенной анимации */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
