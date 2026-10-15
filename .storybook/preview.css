@@ -1,0 +1,22 @@
+/* Оформление самой витрины — в сборку приложения не попадает. */
+
+.sb-canvas {
+  display: flex;
+  justify-content: center;
+  min-height: 100vh;
+  background: #e7e2f8;
+}
+
+/* Рамка телефона: ширина из целевого диапазона задания (360–430 px) */
+.sb-phone {
+  width: 390px;
+  max-width: 100%;
+  min-height: 100vh;
+  background: var(--bg);
+  box-shadow: 0 0 0 1px rgba(36, 27, 77, 0.08);
+}
+
+/* Отступ для одиночных компонентов (карточка тарифа), чтобы они не липли к краям */
+.sb-inset {
+  padding: 24px 20px;
+}
