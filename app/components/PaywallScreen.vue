@@ -106,15 +106,16 @@ const restoreMessage = computed(() => {
         <button type="button" class="paywall__retry" @click="emit('retry')">Повторить</button>
       </div>
 
-      <OfferCard
-        v-for="offer in offers"
-        v-else
-        :key="offer.id"
-        :offer="offer"
-        :selected="offer.id === selectedOfferId"
-        :disabled="isBuying || restoreStatus === 'pending'"
-        @select="emit('select', offer.id)"
-      />
+      <template v-else>
+        <OfferCard
+          v-for="offer in offers"
+          :key="offer.id"
+          :offer="offer"
+          :selected="offer.id === selectedOfferId"
+          :disabled="isBuying || restoreStatus === 'pending'"
+          @select="emit('select', offer.id)"
+        />
+      </template>
     </section>
 
     <footer class="paywall__footer">

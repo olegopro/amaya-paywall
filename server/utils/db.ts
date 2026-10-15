@@ -49,7 +49,12 @@ function ensureSchema(sql: Sql): Promise<unknown> {
       device_id  TEXT        NOT NULL,
       created_at TIMESTAMPTZ NOT NULL
     )
-  `)
+  `).catch((error: unknown) => {
+    // Иначе отклонённый промис остался бы в schema навсегда и все запросы к БД
+    // падали бы до перезапуска процесса — следующая попытка должна пробовать снова
+    schema = null
+    throw error
+  })
   schema = created
 
   return created

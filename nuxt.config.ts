@@ -4,10 +4,9 @@ import { defineNuxtConfig } from 'nuxt/config'
   Frontend и server routes живут в одном приложении Nuxt:
   страница экрана — app/pages/index.vue, API — server/api/*, работа с БД — server/utils/db.ts.
 
-  Переменные окружения (см. .env.example):
-  TURSO_DATABASE_URL и TURSO_AUTH_TOKEN — продовая БД Turso. Если их нет,
-  server/utils/db.ts работает с локальным файлом data/local.db, поэтому запуск
-  проекта не требует ни аккаунтов, ни ключей.
+  База — Postgres в Vercel (Neon): переменную DATABASE_URL подставляет интеграция Storage.
+  Без неё server/utils/db.ts держит покупки в памяти процесса, поэтому локальный запуск
+  не требует ни аккаунтов, ни ключей.
 */
 export default defineNuxtConfig({
   compatibilityDate: '2026-10-01',

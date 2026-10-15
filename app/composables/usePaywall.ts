@@ -87,7 +87,9 @@ export async function usePaywall() {
       restoredPurchase.value = response.purchase
       restoreStatus.value = response.restored ? 'found' : 'not-found'
     } catch (requestError) {
-      restoreStatus.value = 'not-found'
+      // Запрос не прошёл — это не «покупок нет», поэтому состояние остаётся исходным,
+      // а пользователь видит текст ошибки
+      restoreStatus.value = 'idle'
       purchaseError.value = readApiError(requestError)
     }
   }
