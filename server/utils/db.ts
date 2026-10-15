@@ -1,0 +1,115 @@
+import { neon } from '@neondatabase/serverless'
+import type { Purchase } from '#shared/types/paywall'
+
+/*
+  Хранилище тестовых покупок.
+
+  В проде — Postgres в Vercel (Neon): переменную DATABASE_URL подставляет интеграция
+  Storage, сам код ходит в базу по HTTP-драйверу, поэтому работает и в serverless.
+  Локально переменной обычно нет — чтобы проект запускался без аккаунтов, покупки
+  складываются в память процесса: данные живут до перезапуска dev-сервера.
+  Режим один раз сообщается строкой в лог.
+
+  Авторизации в задании нет, поэтому «пользователь» — это идентификатор устройства
+  из httpOnly-куки (server/utils/device.ts).
+*/
+
+type Sql = ReturnType<typeof neon>
+
+type PurchaseRow = {
+  id: number | string
+  offer_id: string
+  created_at: string | Date
+}
+
+let client: Sql | null = null
+let schema: Promise<unknown> | null = null
+
+/** Покупки в памяти: только для локального запуска без DATABASE_URL */
+const memory: Array<Purchase & { deviceId: string }> = []
+let memoryWarned = false
+
+function databaseUrl(): string {
+  return process.env.DATABASE_URL?.trim() ?? ''
+}
+
+function getDb(): Sql {
+  client ??= neon(databaseUrl())
+  return client
+}
+
+/** Таблица создаётся при первом обращении — отдельных миграций в тестовом сервисе нет */
+function ensureSchema(sql: Sql): Promise<unknown> {
+  if (schema) return schema
+
+  const created = sql.query(`
+    CREATE TABLE IF NOT EXISTS purchases (
+      id         SERIAL PRIMARY KEY,
+      offer_id   TEXT        NOT NULL,
+      device_id  TEXT        NOT NULL,
+      created_at TIMESTAMPTZ NOT NULL
+    )
+  `)
+  schema = created
+
+  return created
+}
+
+function toPurchase(row: PurchaseRow): Purchase {
+  return {
+    id: Number(row.id),
+    offerId: row.offer_id,
+    createdAt: new Date(row.created_at).toISOString(),
+  }
+}
+
+function warnMemoryMode(): void {
+  if (memoryWarned) return
+  memoryWarned = true
+  console.warn(
+    '[db] DATABASE_URL не задан — покупки пишутся в память и исчезнут при перезапуске. '
+    + 'На Vercel база подключается из панели Storage (Neon).',
+  )
+}
+
+/** Сохраняет тестовую покупку и возвращает её так, как её увидит клиент */
+export async function savePurchase(offerId: string, deviceId: string): Promise<Purchase> {
+  const createdAt = new Date().toISOString()
+
+  if (!databaseUrl()) {
+    warnMemoryMode()
+    const purchase: Purchase = { id: memory.length + 1, offerId, createdAt }
+    memory.push({ ...purchase, deviceId })
+    return purchase
+  }
+
+  const sql = getDb()
+  await ensureSchema(sql)
+
+  const rows = await sql.query(
+    'INSERT INTO purchases (offer_id, device_id, created_at) VALUES ($1, $2, $3) RETURNING id, offer_id, created_at',
+    [offerId, deviceId, createdAt],
+  ) as PurchaseRow[]
+
+  return toPurchase(rows[0]!)
+}
+
+/** Последняя покупка устройства — для ссылки «Восстановить покупки» */
+export async function findLastPurchase(deviceId: string): Promise<Purchase | null> {
+  if (!databaseUrl()) {
+    warnMemoryMode()
+    const last = [...memory].reverse().find((purchase) => purchase.deviceId === deviceId)
+    return last ? { id: last.id, offerId: last.offerId, createdAt: last.createdAt } : null
+  }
+
+  const sql = getDb()
+  await ensureSchema(sql)
+
+  const rows = await sql.query(
+    'SELECT id, offer_id, created_at FROM purchases WHERE device_id = $1 ORDER BY id DESC LIMIT 1',
+    [deviceId],
+  ) as PurchaseRow[]
+
+  const row = rows[0]
+  return row ? toPurchase(row) : null
+}
