@@ -10,6 +10,8 @@
   --bg-page: #ded5f2;
   --surface: #ffffff;
   --surface-muted: #f7f5ff;
+  /* Полоса заглушки, ждущей данные: светлее рамок и подложек */
+  --skeleton-soft: #f0ecfb;
 
   /* Текст */
   --text: #241b4d;
@@ -20,6 +22,8 @@
   --brand: #6b4bf2;
   --brand-strong: #5936e8;
   --brand-soft: #efe9ff;
+  /* Светлый край градиента эмблемы */
+  --brand-light: #8a6bff;
   --border: #e6e0f7;
   --border-strong: #d7cdf4;
 
@@ -28,18 +32,26 @@
   --accent: #b3510a;
   --accent-soft: #fff1e2;
   --success: #0d7a53;
+  /* Тёмный край градиента круга успеха */
+  --success-strong: #0a6746;
   --success-soft: #e6f7f0;
   --danger: #b62b30;
   --danger-soft: #fdecec;
 
   /* Форма и тени */
   --radius-card: 20px;
+  /* Карточка тарифа ниже и компактнее блока сообщения, поэтому радиус отдельный */
+  --radius-card-sm: 18px;
   --radius-pill: 999px;
   --shadow-card: 0 6px 20px rgba(36, 27, 77, 0.07);
   --shadow-cta: 0 10px 22px rgba(107, 75, 242, 0.3);
 
-  /* Минимальная зона нажатия: рекомендации Apple и Google — от 44 px */
+  /* Зоны нажатия: рекомендации Apple и Google — от 44 px */
   --tap: 48px;
+  /* Второстепенные действия: ссылка «Восстановить покупки», кнопка «Повторить» */
+  --tap-sm: 44px;
+  /* Основное действие: кнопка покупки */
+  --tap-lg: 56px;
 }
 
 *,
@@ -74,6 +86,10 @@ button {
   background: none;
   border: 0;
   cursor: pointer;
+}
+
+button:disabled {
+  cursor: not-allowed;
 }
 
 /* Общий видимый фокус — экран должен быть проходим с клавиатуры и с экранным диктором */

@@ -24,7 +24,7 @@
     padding: 13px 16px;
     background: var(--surface);
     border: 2px solid var(--border);
-    border-radius: 18px;
+    border-radius: var(--radius-card-sm);
 
     .radio {
       width: 24px;
@@ -54,7 +54,7 @@
     .hint-bar {
       width: 96px;
       height: 10px;
-      background: #f0ecfb;
+      background: var(--skeleton-soft);
     }
 
     .price-bar {

@@ -1,4 +1,4 @@
-import { computed, ref, watch } from 'vue'
+import { computed, ref } from 'vue'
 import type {
   Offer,
   OffersResponse,
@@ -17,10 +17,11 @@ import { readApiError } from '~/utils/api-error'
  * поэтому экран целиком показывается в Storybook без Nuxt и без сети.
  *
  * useFetch здесь не импортируется явно: это авто-импорт Nuxt, и файл живёт
- * только в приложении (в витрине его заменяют props).
+ * только в приложении (в витрине его заменяют props). Ожидание ответа не задерживает
+ * setup: пока тарифы едут, экран показывает заглушки, а страница остаётся синхронной.
  */
-export async function usePaywall() {
-  const { data, status, error, refresh: retryOffers } = await useFetch<OffersResponse>('/api/offers', {
+export function usePaywall() {
+  const { data, status, error, refresh: retryOffers } = useFetch<OffersResponse>('/api/offers', {
     key: 'paywall-offers',
   })
 
@@ -31,26 +32,36 @@ export async function usePaywall() {
   })
   const offersError = computed(() => (error.value ? readApiError(error.value) : ''))
 
-  const selectedOfferId = ref<string | null>(null)
-  const selectedOffer = computed(() => offers.value.find((offer) => offer.id === selectedOfferId.value) ?? null)
+  /** Явный выбор пользователя; пока его нет, действует тариф по умолчанию */
+  const chosenOfferId = ref<string | null>(null)
+
+  /*
+    Выбранный тариф — величина вычисляемая, а не следствие наблюдателя: так он верно
+    рисуется и на сервере (в HTML сразу есть выбранная карточка), и на клиенте.
+    По умолчанию берётся тариф, помеченный сервером как рекомендуемый (год).
+  */
+  const selectedOffer = computed(
+    () => offers.value.find((offer) => offer.id === chosenOfferId.value)
+      ?? offers.value.find((offer) => offer.recommended)
+      ?? offers.value[0]
+      ?? null,
+  )
+  const selectedOfferId = computed(() => selectedOffer.value?.id ?? null)
 
   const purchaseStatus = ref<PurchaseStatus>('idle')
   const purchaseError = ref('')
   const donePurchase = ref<Purchase | null>(null)
 
   const restoreStatus = ref<RestoreStatus>('idle')
+  const restoreError = ref('')
   const restoredPurchase = ref<Purchase | null>(null)
 
-  // По умолчанию выбран тариф, помеченный сервером как рекомендуемый (год)
-  watch(offers, (list) => {
-    const stillThere = list.some((offer) => offer.id === selectedOfferId.value)
-    if (stillThere) return
-    selectedOfferId.value = list.find((offer) => offer.recommended)?.id ?? list[0]?.id ?? null
-  }, { immediate: true })
+  // Покупка и восстановление не идут одновременно: иначе две операции пишут в одно состояние
+  const isBusy = computed(() => purchaseStatus.value === 'pending' || restoreStatus.value === 'pending')
 
   function selectOffer(id: string) {
-    if (purchaseStatus.value === 'pending') return
-    selectedOfferId.value = id
+    if (isBusy.value) return
+    chosenOfferId.value = id
     // Прошлая ошибка относится к другому тарифу — после смены выбора она только путает
     purchaseStatus.value = 'idle'
     purchaseError.value = ''
@@ -58,10 +69,11 @@ export async function usePaywall() {
 
   async function buySubscription() {
     const offer = selectedOffer.value
-    if (!offer || purchaseStatus.value === 'pending') return
+    if (!offer || isBusy.value) return
 
     purchaseStatus.value = 'pending'
     purchaseError.value = ''
+    restoreError.value = ''
 
     try {
       const response = await $fetch<PurchaseResponse>('/api/purchase', {
@@ -77,9 +89,10 @@ export async function usePaywall() {
   }
 
   async function restorePurchases() {
-    if (restoreStatus.value === 'pending') return
+    if (isBusy.value) return
 
     restoreStatus.value = 'pending'
+    restoreError.value = ''
     restoredPurchase.value = null
 
     try {
@@ -88,9 +101,9 @@ export async function usePaywall() {
       restoreStatus.value = response.restored ? 'found' : 'not-found'
     } catch (requestError) {
       // Запрос не прошёл — это не «покупок нет», поэтому состояние остаётся исходным,
-      // а пользователь видит текст ошибки
+      // а текст ошибки показывается рядом со ссылкой
       restoreStatus.value = 'idle'
-      purchaseError.value = readApiError(requestError)
+      restoreError.value = readApiError(requestError)
     }
   }
 
@@ -100,6 +113,7 @@ export async function usePaywall() {
     purchaseError.value = ''
     donePurchase.value = null
     restoreStatus.value = 'idle'
+    restoreError.value = ''
     restoredPurchase.value = null
   }
 
@@ -108,11 +122,11 @@ export async function usePaywall() {
     offersStatus,
     offersError,
     selectedOfferId,
-    selectedOffer,
     purchaseStatus,
     purchaseError,
     donePurchase,
     restoreStatus,
+    restoreError,
     restoredPurchase,
     retryOffers,
     selectOffer,

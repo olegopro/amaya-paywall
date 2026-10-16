@@ -35,7 +35,8 @@ const badgeLabel = computed(() => (props.offer.savingsPercent ? `Выгодно 
     class="offer-card"
     :class="{ 'is-selected': selected }"
     :disabled="disabled"
-    :aria-pressed="selected"
+    role="radio"
+    :aria-checked="selected"
     @click="emit('select')"
   >
     <span class="radio" aria-hidden="true">
@@ -71,7 +72,7 @@ const badgeLabel = computed(() => (props.offer.savingsPercent ? `Выгодно 
     background: var(--surface);
     // Рамка есть всегда, меняется только цвет: карточка не «прыгает» при выборе
     border: 2px solid var(--border);
-    border-radius: 18px;
+    border-radius: var(--radius-card-sm);
     box-shadow: var(--shadow-card);
     transition: border-color 0.15s ease, background-color 0.15s ease, box-shadow 0.15s ease;
 

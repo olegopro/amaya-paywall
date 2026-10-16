@@ -96,7 +96,12 @@ export async function savePurchase(offerId: string, deviceId: string): Promise<P
     [offerId, deviceId, createdAt],
   ) as PurchaseRow[]
 
-  return toPurchase(rows[0]!)
+  const row = rows[0]
+  if (!row) {
+    throw new Error('Postgres не вернул строку из INSERT ... RETURNING — покупка не записана')
+  }
+
+  return toPurchase(row)
 }
 
 /** Последняя покупка устройства — для ссылки «Восстановить покупки» */

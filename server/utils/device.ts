@@ -8,6 +8,8 @@ import type { H3Event } from 'h3'
 
 export const DEVICE_COOKIE = 'device_id'
 
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
 /** Кука на год: устройство в webview игры живёт долго, восстанавливать покупку нужно и через месяцы */
 function cookieOptions() {
   return {
@@ -21,16 +23,18 @@ function cookieOptions() {
 }
 
 /**
- * Возвращает id устройства: из контекста запроса, из куки или новый —
- * новый сразу уезжает клиенту в set-cookie.
+ * Возвращает id устройства: из контекста запроса, из куки или новый — новый сразу
+ * уезжает клиенту в set-cookie. Кука принимается, только если это UUID: значение
+ * мог прислать кто угодно, а по нему ищутся покупки.
  */
 export function ensureDeviceId(event: H3Event): string {
-  const fromContext = event.context.deviceId as string | undefined
-  if (fromContext) return fromContext
+  const fromContext = event.context.deviceId
+  if (typeof fromContext === 'string' && UUID.test(fromContext)) return fromContext
 
   const fromCookie = getCookie(event, DEVICE_COOKIE)
-  const deviceId = fromCookie || randomUUID()
-  if (!fromCookie) setCookie(event, DEVICE_COOKIE, deviceId, cookieOptions())
+  const deviceId = fromCookie && UUID.test(fromCookie) ? fromCookie : randomUUID()
+
+  if (deviceId !== fromCookie) setCookie(event, DEVICE_COOKIE, deviceId, cookieOptions())
 
   event.context.deviceId = deviceId
   return deviceId

@@ -6,7 +6,12 @@ import type { RestoreResponse } from '#shared/types/paywall'
  */
 export default defineEventHandler(async (event): Promise<RestoreResponse> => {
   const deviceId = ensureDeviceId(event)
-  const purchase = await findLastPurchase(deviceId)
 
-  return { restored: Boolean(purchase), purchase }
+  try {
+    const purchase = await findLastPurchase(deviceId)
+    return { restored: purchase !== null, purchase }
+  } catch (error) {
+    console.error('[restore] не удалось прочитать покупки устройства', error)
+    throw apiError(500, 'Не удалось проверить покупки. Попробуйте ещё раз.')
+  }
 })

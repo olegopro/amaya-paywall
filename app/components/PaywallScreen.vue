@@ -26,6 +26,7 @@ const props = defineProps<{
   purchaseError: string
   donePurchase: Purchase | null
   restoreStatus: RestoreStatus
+  restoreError: string
   restoredPurchase: Purchase | null
 }>()
 
@@ -42,7 +43,11 @@ const selectedOffer = computed(
 )
 
 const isBuying = computed(() => props.purchaseStatus === 'pending')
-const canBuy = computed(() => props.offersStatus === 'ready' && selectedOffer.value !== null && !isBuying.value)
+/** Пока идёт запрос — покупка или восстановление — кнопка недоступна: две операции разом не запускаются */
+const canBuy = computed(() => props.offersStatus === 'ready'
+  && selectedOffer.value !== null
+  && !isBuying.value
+  && props.restoreStatus !== 'pending')
 
 const ctaLabel = computed(() => {
   if (isBuying.value) return 'Оформляем…'
@@ -89,7 +94,7 @@ const restoreMessage = computed(() => {
       <p class="lead">Все уровни, герои и награды. Без рекламы и без ожидания.</p>
     </header>
 
-    <section class="offers" aria-label="Тарифы">
+    <section class="offers" role="radiogroup" aria-label="Тарифы">
       <template v-if="offersStatus === 'loading'">
         <OfferCardSkeleton />
         <OfferCardSkeleton />
@@ -135,10 +140,12 @@ const restoreMessage = computed(() => {
         {{ selectedOffer.period === 'year' ? 'в год' : 'в месяц' }}
       </p>
 
+      <p v-if="restoreError" class="alert" role="alert">{{ restoreError }}</p>
+
       <button
         type="button"
         class="restore"
-        :disabled="restoreStatus === 'pending' || offersStatus !== 'ready'"
+        :disabled="restoreStatus === 'pending' || purchaseStatus === 'pending' || offersStatus !== 'ready'"
         @click="emit('restore')"
       >
         {{ restoreStatus === 'pending' ? 'Восстанавливаем…' : 'Восстановить покупки' }}
@@ -172,7 +179,7 @@ const restoreMessage = computed(() => {
         height: 76px;
         align-items: center;
         justify-content: center;
-        background: linear-gradient(155deg, #8a6bff 0%, var(--brand) 45%, var(--brand-strong) 100%);
+        background: linear-gradient(155deg, var(--brand-light) 0%, var(--brand) 45%, var(--brand-strong) 100%);
         border-radius: 24px;
         box-shadow: 0 14px 28px rgba(107, 75, 242, 0.32);
       }
@@ -239,7 +246,7 @@ const restoreMessage = computed(() => {
     }
 
     .retry {
-      min-height: 44px;
+      min-height: var(--tap-sm);
       margin-top: 10px;
       padding: 0 24px;
       font-size: 15px;
@@ -285,7 +292,7 @@ const restoreMessage = computed(() => {
     .cta {
       display: flex;
       width: 100%;
-      min-height: 56px;
+      min-height: var(--tap-lg);
       align-items: center;
       justify-content: center;
       gap: 10px;
@@ -326,7 +333,7 @@ const restoreMessage = computed(() => {
     }
 
     .restore {
-      min-height: 44px;
+      min-height: var(--tap-sm);
       font-size: 15px;
       font-weight: 800;
       color: var(--brand);

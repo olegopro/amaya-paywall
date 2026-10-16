@@ -22,6 +22,7 @@ const meta = {
     purchaseError: '',
     donePurchase: null,
     restoreStatus: 'idle',
+    restoreError: '',
     restoredPurchase: null,
   },
   argTypes: {
@@ -33,6 +34,7 @@ const meta = {
     purchaseError: { control: 'text', description: 'Текст ошибки покупки' },
     donePurchase: { control: 'object', description: 'Сохранённая покупка — состояние успеха' },
     restoreStatus: { control: 'select', options: ['idle', 'pending', 'found', 'not-found'] },
+    restoreError: { control: 'text', description: 'Текст ошибки запроса «Восстановить покупки»' },
     restoredPurchase: { control: 'object', description: 'Покупка, найденная при восстановлении' },
   },
 } satisfies Meta<typeof PaywallScreen>

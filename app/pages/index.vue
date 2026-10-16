@@ -13,13 +13,14 @@ const {
   purchaseError,
   donePurchase,
   restoreStatus,
+  restoreError,
   restoredPurchase,
   retryOffers,
   selectOffer,
   buySubscription,
   restorePurchases,
   resetPaywall,
-} = await usePaywall()
+} = usePaywall()
 </script>
 
 <template>
@@ -32,6 +33,7 @@ const {
     :purchase-error="purchaseError"
     :done-purchase="donePurchase"
     :restore-status="restoreStatus"
+    :restore-error="restoreError"
     :restored-purchase="restoredPurchase"
     @select="selectOffer"
     @purchase="buySubscription"

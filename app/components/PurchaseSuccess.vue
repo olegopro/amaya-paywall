@@ -57,7 +57,7 @@ const purchaseLabel = computed(() => `Покупка №${props.purchase.id} · 
       height: 92px;
       align-items: center;
       justify-content: center;
-      background: linear-gradient(160deg, var(--success) 0%, #0a6746 100%);
+      background: linear-gradient(160deg, var(--success) 0%, var(--success-strong) 100%);
       border-radius: 50%;
       box-shadow: 0 12px 26px rgba(13, 122, 83, 0.28);
 
@@ -94,7 +94,7 @@ const purchaseLabel = computed(() => `Покупка №${props.purchase.id} · 
 
     .cta {
       width: 100%;
-      min-height: 56px;
+      min-height: var(--tap-lg);
       margin-top: 12px;
       font-size: 17px;
       font-weight: 800;
