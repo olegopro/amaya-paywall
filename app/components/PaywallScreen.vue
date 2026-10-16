@@ -163,7 +163,9 @@ const restoreMessage = computed(() => {
 <style scoped>
 .paywall {
   display: flex;
-  min-height: 100dvh;
+  /* Экран заполняет окно приложения (app-shell / рамку витрины), а не задаёт высоту сам:
+     так кнопка покупки остаётся у нижнего края и ничего не вылезает за скруглённый угол */
+  flex: 1;
   flex-direction: column;
   gap: 22px;
   /* safe-area — вырез камеры и «домашняя» полоса в webview */

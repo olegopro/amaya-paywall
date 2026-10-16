@@ -42,7 +42,8 @@ const purchaseLabel = computed(() => `Покупка №${props.purchase.id} · 
 <style scoped>
 .success {
   display: flex;
-  min-height: 100dvh;
+  /* Как и у paywall: экран заполняет окно приложения, высоту задаёт оно */
+  flex: 1;
   flex-direction: column;
   align-items: center;
   justify-content: center;

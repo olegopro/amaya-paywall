@@ -5,6 +5,9 @@
 :root {
   /* Фон и поверхности */
   --bg: #f5f2ff;
+  /* Фон страницы вне экрана: в широком окне экран показывается «окошком», и вокруг него нужен
+     заметно более тёмный фон, иначе границы окна не видно */
+  --bg-page: #ded5f2;
   --surface: #ffffff;
   --surface-muted: #f7f5ff;
 
@@ -52,7 +55,7 @@ body {
 }
 
 body {
-  background: var(--bg);
+  background: var(--bg-page);
   color: var(--text);
   font-family: 'Nunito Variable', 'Nunito', system-ui, -apple-system, 'Segoe UI', sans-serif;
   font-size: 16px;
