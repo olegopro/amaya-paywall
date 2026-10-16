@@ -1,90 +1,67 @@
-# Amaya Paywall — тестовое задание
+# Amaya Paywall - тестовое задание
 
 Мобильный экран оплаты для условной детской игры: два тарифа, тестовая покупка,
-ссылка «Восстановить покупки». Frontend и server routes живут в одном приложении
-Nuxt 4 (TypeScript, strict).
+восстановление покупок. Frontend и server routes в одном приложении Nuxt 4 (TypeScript, strict).
 
 - Живой сервис: https://amaya-paywall-sepia.vercel.app
 - Витрина экрана: https://amaya-paywall-sepia.vercel.app/storybook/
+- Репозиторий: https://github.com/olegopro/amaya-paywall
 
 ## Запуск локально
 
 ```bash
 npm install
 npm run dev          # http://localhost:3000
+npm run build        # витрина Storybook, затем сборка Nuxt
+npm run storybook    # витрина на http://localhost:6006
 ```
 
-Аккаунты и ключи не нужны. Без переменной `DATABASE_URL` покупки пишутся в память
-процесса — в лог уходит одна строка предупреждения, при перезапуске данные исчезают.
-Чтобы писать в Postgres: скопировать `.env.example` в `.env` и указать `DATABASE_URL`.
-
-| Команда | Что делает |
-| --- | --- |
-| `npm run build` | сборка: сначала витрина Storybook в `public/storybook`, затем `nuxt build` |
-| `npm run preview` | запуск собранного приложения |
-| `npm run storybook` | витрина на http://localhost:6006 |
-| `npm run typecheck` | проверка типов |
-| `npm run lint` | ESLint (`@nuxt/eslint`) |
+Без `DATABASE_URL` покупки пишутся в память процесса (строка предупреждения в логе; при
+перезапуске данные исчезают) - аккаунты и ключи не нужны. Для Postgres скопируйте
+`.env.example` в `.env`.
 
 ## Где что находится
 
-| Часть | Файлы |
+| Часть | Файл |
 | --- | --- |
-| Экран | `app/pages/index.vue` → `app/components/PaywallScreen.vue` (+ `OfferCard`, `OfferCardSkeleton`, `PurchaseSuccess`) |
+| Экран | `app/pages/index.vue`, `app/components/PaywallScreen.vue` |
 | Состояние и запросы | `app/composables/usePaywall.ts` |
-| Server routes | `server/api/offers.get.ts`, `purchase.post.ts`, `restore.post.ts` |
-| База данных | `server/utils/db.ts` |
-| Тарифы и цены | `server/utils/offers.ts` |
-| Идентификатор устройства | `server/utils/device.ts` + `server/middleware/device-id.ts` |
-| Витрина компонентов | `.storybook/` и `app/**/*.stories.ts` |
+| `GET /api/offers` | `server/api/offers.get.ts`: тарифы с ценами заданы на сервере |
+| `POST /api/purchase` | `server/api/purchase.post.ts`: проверяет `offerId` по списку тарифов, 400 на чужой |
+| `POST /api/restore` | `server/api/restore.post.ts`: последняя покупка устройства |
+| База | `server/utils/db.ts`, таблица `purchases` создаётся сама |
+| Тарифы и устройство | `server/utils/offers.ts`, `server/utils/device.ts` (httpOnly-кука `device_id`), `server/middleware/device-id.ts` |
+| Витрина | `.storybook/`, `app/**/*.stories.ts` |
 
-API:
-
-- `GET /api/offers` → `{ offers: [...] }` — тарифы с ценами (цены заданы на сервере);
-- `POST /api/purchase` `{ offerId }` → `{ purchase }`; на тариф, которого нет в списке, — `400`;
-- `POST /api/restore` → `{ restored, purchase }` — последняя покупка устройства.
-
-Экран собран из презентационных компонентов: данные приходят в `props`, действия уходят
-в `emit`, поэтому любое состояние открывается в Storybook без Nuxt и без сети.
+Экран собран из презентационных компонентов (`props`/`emit`), поэтому в Storybook открывается
+любое состояние без Nuxt и без сети.
 
 ## Почему Vercel и Neon
 
-- server routes на Vercel работают без настройки — Nitro сам определяет пресет, деплой из панели;
-- база создана там же: Vercel → Storage → Neon (бесплатный план, регион iad1), переменную
-  `DATABASE_URL` интеграция подключила к проекту сама;
-- драйвер `@neondatabase/serverless` ходит в Postgres по HTTP — в serverless обычное
-  TCP-соединение не переживает запрос;
-- таблица `purchases` создаётся при первом обращении (`CREATE TABLE IF NOT EXISTS`), миграций нет.
+Server routes на Vercel работают без настройки, деплой из панели. База создана там же
+(Storage → Neon, бесплатный план, iad1), `DATABASE_URL` интеграция подключила сама.
+Драйвер `@neondatabase/serverless` ходит в Postgres по HTTP: в serverless TCP-соединение
+не переживает запрос.
 
-Деплой: проект собран на Vercel из этого репозитория (Nuxt определился сам, команда сборки —
-`npm run build`), база подключена из Storage. Тестовая покупка после проверки видна
-в таблице `purchases` в Neon.
+## Почему вместо Figma Storybook
 
-## Почему вместо Figma — Storybook
-
-Отдельный макет не рисовался: экран небольшой, и вместо картинки, которая разошлась бы
-с кодом, сдан тот же экран живой витриной по пути `/storybook/`. Витрина показывает
-продакшн-компоненты и продакшн-CSS, поэтому расхождению «макет против реализации» взяться неоткуда.
-
-Истории: экран в состояниях (рабочий, загрузка тарифов, ошибка загрузки тарифов, ошибка покупки,
-успех) и карточка тарифа (обычная и выбранная).
+Макет не рисовался: витрина показывает те же продакшн-компоненты и CSS, поэтому не разойдётся
+с кодом. Истории: экран в состояниях (рабочий, загрузка, ошибка тарифов, ошибка покупки, успех)
+и карточка тарифа (обычная, выбранная).
 
 ## ИИ-инструменты
 
-- **Claude Code** (агент) с моделью DeepSeek V4.1 Flash — реализация: каркас Nuxt, server routes,
-  компоненты, истории, этот README.
-- **Claude Opus** в отдельной сессии — постановка задачи и ревью кода, снимков и README.
-- Актуальные API Nuxt 4 и Storybook 10 сверялись по документации через Context7, а не по памяти.
-- Состояния экрана снимались в headless Firefox (WebDriver BiDi) на ширине 390 px.
+- **Claude Code** (агент, модель DeepSeek V4.1 Flash): каркас Nuxt, server routes, компоненты, истории, README.
+- **Claude Opus** в отдельной сессии: постановка задачи и ревью кода, снимков, README.
+- API Nuxt 4 и Storybook 10 сверялись через Context7, снимки снимались в headless Firefox.
 
 ## Что проверено руками
 
-<!-- заполняет автор -->
+Открыл живой сервис и витрину в браузере: вид на телефонной ширине и окном на компьютере, все состояния в Storybook. Диф каждого коммита просмотрен перед push. Запись покупки проверена в таблице Neon.
 
 ## Что сделал бы ещё за 2 часа
 
-- покупка через платёжный SDK магазина (в задании запрещён) и проверка чека на сервере;
-- пользователь вместо устройства: вход в аккаунт, привязка покупок к нему, восстановление по аккаунту;
-- тесты: unit на `usePaywall`, e2e на сценарий оплаты, скриншотные тесты витрины;
-- аналитика воронки: открытие экрана, выбор тарифа, успех и отказ;
-- состояния для медленной сети: таймаут запроса и повторная отправка покупки без дубля.
+- покупку через SDK магазина и проверку чека на сервере;
+- вход в аккаунт вместо устройства;
+- тесты: unit и e2e на сценарий оплаты;
+- аналитику воронки и повторную отправку покупки без дубля.
