@@ -1,4 +1,3 @@
-import { computed, ref } from 'vue'
 import type {
   Offer,
   OffersResponse,
@@ -9,16 +8,16 @@ import type {
   RestoreResponse,
   RestoreStatus,
 } from '#shared/types/paywall'
-import { readApiError } from '~/utils/api-error'
 
 /**
  * Состояние экрана оплаты и запросы к server routes.
  * Страница передаёт это состояние в PaywallScreen, а тот только рисует —
  * поэтому экран целиком показывается в Storybook без Nuxt и без сети.
  *
- * useFetch здесь не импортируется явно: это авто-импорт Nuxt, и файл живёт
- * только в приложении (в витрине его заменяют props). Ожидание ответа не задерживает
- * setup: пока тарифы едут, экран показывает заглушки, а страница остаётся синхронной.
+ * Файл живёт только в приложении, поэтому здесь работают автоимпорты Nuxt
+ * (useFetch, computed, ref, readApiError); в компонентах импорты остаются явными
+ * ради витрины. Ожидание ответа не задерживает setup: пока тарифы едут, экран
+ * показывает заглушки, а страница остаётся синхронной.
  */
 export function usePaywall() {
   const { data, status, error, refresh: retryOffers } = useFetch<OffersResponse>('/api/offers', {
@@ -59,14 +58,16 @@ export function usePaywall() {
   // Покупка и восстановление не идут одновременно: иначе две операции пишут в одно состояние
   const isBusy = computed(() => purchaseStatus.value === 'pending' || restoreStatus.value === 'pending')
 
+  /** Тексты прошлых ошибок после нового действия только путают */
+  function clearErrors() {
+    purchaseError.value = ''
+    restoreError.value = ''
+  }
+
   function selectOffer(id: string) {
     if (isBusy.value) return
     chosenOfferId.value = id
-    // Прошлые ошибки относятся к другому тарифу и к прошлому действию — после смены
-    // выбора они только путают
-    if (purchaseStatus.value === 'error') purchaseStatus.value = 'idle'
-    purchaseError.value = ''
-    restoreError.value = ''
+    clearErrors()
   }
 
   async function buySubscription() {
@@ -74,8 +75,7 @@ export function usePaywall() {
     if (!offer || isBusy.value) return
 
     purchaseStatus.value = 'pending'
-    purchaseError.value = ''
-    restoreError.value = ''
+    clearErrors()
 
     try {
       const response = await $fetch<PurchaseResponse>('/api/purchase', {
@@ -85,8 +85,9 @@ export function usePaywall() {
       donePurchase.value = response.purchase
       purchaseStatus.value = 'success'
     } catch (requestError) {
+      // Сбой покупки — не отдельное состояние экрана, а текст рядом с кнопкой
+      purchaseStatus.value = 'idle'
       purchaseError.value = readApiError(requestError)
-      purchaseStatus.value = 'error'
     }
   }
 
@@ -94,12 +95,8 @@ export function usePaywall() {
     if (isBusy.value) return
 
     restoreStatus.value = 'pending'
-    restoreError.value = ''
     restoredPurchase.value = null
-    // Неудачная покупка к восстановлению отношения не имеет: иначе на экране разом
-    // висели бы ошибка покупки и сообщение о восстановлении
-    if (purchaseStatus.value === 'error') purchaseStatus.value = 'idle'
-    purchaseError.value = ''
+    clearErrors()
 
     try {
       const response = await $fetch<RestoreResponse>('/api/restore', { method: 'POST' })
@@ -116,11 +113,10 @@ export function usePaywall() {
   /** Возврат к тарифам с экрана успеха — в приложении здесь закрылось бы окно оплаты */
   function resetPaywall() {
     purchaseStatus.value = 'idle'
-    purchaseError.value = ''
     donePurchase.value = null
     restoreStatus.value = 'idle'
-    restoreError.value = ''
     restoredPurchase.value = null
+    clearErrors()
   }
 
   return {
@@ -128,7 +124,6 @@ export function usePaywall() {
     offersStatus,
     offersError,
     selectedOfferId,
-    isBusy,
     purchaseStatus,
     purchaseError,
     donePurchase,

@@ -22,6 +22,9 @@ type PurchaseRow = {
   created_at: string | Date
 }
 
+/** Строка подключения читается один раз: на ходу переменная окружения не меняется */
+const DATABASE_URL = process.env.DATABASE_URL?.trim() ?? ''
+
 let client: Sql | null = null
 let schema: Promise<unknown> | null = null
 
@@ -29,13 +32,13 @@ let schema: Promise<unknown> | null = null
 const memory: Array<Purchase & { deviceId: string }> = []
 let memoryWarned = false
 
-function databaseUrl(): string {
-  return process.env.DATABASE_URL?.trim() ?? ''
-}
-
-function getDb(): Sql {
-  client ??= neon(databaseUrl())
-  return client
+function warnMemoryMode(): void {
+  if (memoryWarned) return
+  memoryWarned = true
+  console.warn(
+    '[db] DATABASE_URL не задан — покупки пишутся в память и исчезнут при перезапуске. '
+    + 'На Vercel база подключается из панели Storage (Neon).',
+  )
 }
 
 /** Таблица создаётся при первом обращении — отдельных миграций в тестовом сервисе нет */
@@ -60,6 +63,22 @@ function ensureSchema(sql: Sql): Promise<unknown> {
   return created
 }
 
+/**
+ * Клиент БД с готовой схемой или null — тогда покупки живут в памяти.
+ * Оба обращения к хранилищу начинаются с этого вызова.
+ */
+async function getSql(): Promise<Sql | null> {
+  if (!DATABASE_URL) {
+    warnMemoryMode()
+    return null
+  }
+
+  const sql = (client ??= neon(DATABASE_URL))
+  await ensureSchema(sql)
+
+  return sql
+}
+
 function toPurchase(row: PurchaseRow): Purchase {
   return {
     id: Number(row.id),
@@ -68,28 +87,16 @@ function toPurchase(row: PurchaseRow): Purchase {
   }
 }
 
-function warnMemoryMode(): void {
-  if (memoryWarned) return
-  memoryWarned = true
-  console.warn(
-    '[db] DATABASE_URL не задан — покупки пишутся в память и исчезнут при перезапуске. '
-    + 'На Vercel база подключается из панели Storage (Neon).',
-  )
-}
-
 /** Сохраняет тестовую покупку и возвращает её так, как её увидит клиент */
 export async function savePurchase(offerId: string, deviceId: string): Promise<Purchase> {
   const createdAt = new Date().toISOString()
+  const sql = await getSql()
 
-  if (!databaseUrl()) {
-    warnMemoryMode()
+  if (!sql) {
     const purchase: Purchase = { id: memory.length + 1, offerId, createdAt }
     memory.push({ ...purchase, deviceId })
     return purchase
   }
-
-  const sql = getDb()
-  await ensureSchema(sql)
 
   const rows = await sql.query(
     'INSERT INTO purchases (offer_id, device_id, created_at) VALUES ($1, $2, $3) RETURNING id, offer_id, created_at',
@@ -106,14 +113,12 @@ export async function savePurchase(offerId: string, deviceId: string): Promise<P
 
 /** Последняя покупка устройства — для ссылки «Восстановить покупки» */
 export async function findLastPurchase(deviceId: string): Promise<Purchase | null> {
-  if (!databaseUrl()) {
-    warnMemoryMode()
-    const last = [...memory].reverse().find((purchase) => purchase.deviceId === deviceId)
+  const sql = await getSql()
+
+  if (!sql) {
+    const last = memory.findLast((purchase) => purchase.deviceId === deviceId)
     return last ? { id: last.id, offerId: last.offerId, createdAt: last.createdAt } : null
   }
-
-  const sql = getDb()
-  await ensureSchema(sql)
 
   const rows = await sql.query(
     'SELECT id, offer_id, created_at FROM purchases WHERE device_id = $1 ORDER BY id DESC LIMIT 1',

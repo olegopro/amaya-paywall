@@ -1,20 +1,14 @@
 import { defineNuxtConfig } from 'nuxt/config'
 
 /*
-  Frontend и server routes живут в одном приложении Nuxt:
-  страница экрана — app/pages/index.vue, API — server/api/*, работа с БД — server/utils/db.ts.
-
-  База — Postgres в Vercel (Neon): переменную DATABASE_URL подставляет интеграция Storage.
-  Без неё server/utils/db.ts держит покупки в памяти процесса, поэтому локальный запуск
-  не требует ни аккаунтов, ни ключей.
+  Frontend и server routes в одном приложении Nuxt. База — Postgres в Vercel (Neon):
+  DATABASE_URL подставляет интеграция Storage, без неё покупки живут в памяти процесса.
+  TypeScript strict в Nuxt 4 включён по умолчанию, отдельная проверка — npm run typecheck.
 */
 export default defineNuxtConfig({
   compatibilityDate: '2026-10-01',
   modules: ['@nuxt/eslint'],
   devtools: { enabled: false },
-
-  // Явная типизация: TS strict включён, отдельная проверка — командой npm run typecheck
-  typescript: { strict: true, typeCheck: false },
 
   // Шрифт подключается пакетом, без обращения к CDN: webview игры может быть без интернета
   css: ['@fontsource-variable/nunito/index.css', '~/assets/css/main.css'],

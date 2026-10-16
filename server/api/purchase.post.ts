@@ -1,3 +1,4 @@
+import { findOffer } from '#shared/offers'
 import type { PurchaseResponse } from '#shared/types/paywall'
 
 /**

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import type { Offer, Purchase } from '#shared/types/paywall'
+import type { Purchase } from '#shared/types/paywall'
 import { formatDate } from '~/utils/format'
 
 /*
@@ -8,13 +8,13 @@ import { formatDate } from '~/utils/format'
   не осталось кнопки «Оформить» и повторной оплаты.
 */
 const props = defineProps<{
-  offer: Offer | null
+  /** Название тарифа: у покупки из БД есть только id, название ищет экран оплаты */
+  offerTitle: string
   purchase: Purchase
 }>()
 
 const emit = defineEmits<{ reset: [] }>()
 
-const offerTitle = computed(() => props.offer?.title ?? props.purchase.offerId)
 const purchaseLabel = computed(() => `Покупка №${props.purchase.id} · ${formatDate(props.purchase.createdAt)}`)
 </script>
 
@@ -26,14 +26,14 @@ const purchaseLabel = computed(() => `Покупка №${props.purchase.id} · 
       </svg>
     </div>
 
-    <h1 class="title">Подписка оформлена</h1>
+    <h1 class="title screen-title">Подписка оформлена</h1>
     <p class="text">
       Тариф «{{ offerTitle }}» активирован на этом устройстве. Полный контент открыт.
     </p>
 
     <p class="purchase">{{ purchaseLabel }}</p>
 
-    <button type="button" class="cta" @click="emit('reset')">Играть</button>
+    <button type="button" class="cta btn-primary" @click="emit('reset')">Играть</button>
 
     <p class="note">В приложении окно оплаты в этот момент закрывается само.</p>
   </div>
@@ -69,9 +69,6 @@ const purchaseLabel = computed(() => `Покупка №${props.purchase.id} · 
 
     .title {
       margin: 8px 0 0;
-      font-size: 26px;
-      font-weight: 800;
-      letter-spacing: -0.02em;
     }
 
     .text {
@@ -93,20 +90,7 @@ const purchaseLabel = computed(() => `Покупка №${props.purchase.id} · 
     }
 
     .cta {
-      width: 100%;
-      min-height: var(--tap-lg);
       margin-top: 12px;
-      font-size: 17px;
-      font-weight: 800;
-      color: #fff;
-      background: linear-gradient(180deg, var(--brand) 0%, var(--brand-strong) 100%);
-      border-radius: var(--radius-pill);
-      box-shadow: var(--shadow-cta);
-      transition: transform 0.12s ease;
-
-      &:active {
-        transform: scale(0.985);
-      }
     }
 
     .note {

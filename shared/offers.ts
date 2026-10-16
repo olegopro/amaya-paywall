@@ -1,8 +1,8 @@
-import type { Offer } from '#shared/types/paywall'
+import type { Offer } from './types/paywall'
 
 /*
-  Тарифы живут на сервере: клиент не присылает цену, а только id тарифа,
-  и покупка проверяется по этому же списку (server/api/purchase.post.ts).
+  Тарифы — в одном месте для server routes (цены и правила покупки), витрины и фикстур.
+  Цены считаются здесь: клиент присылает только id тарифа и цену не подставляет.
 */
 
 const MONTHLY_PRICE = 299

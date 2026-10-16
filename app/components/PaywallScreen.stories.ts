@@ -4,7 +4,7 @@ import { offersFixture, purchaseFixture } from '~/fixtures/offers'
 
 /*
   Экран оплаты во всех состояниях, которые он умеет показывать:
-  загрузка тарифов, ошибка загрузки, ошибка покупки и успех.
+  загрузка тарифов, ошибка загрузки, ошибка покупки, ошибка восстановления и успех.
   Состояния переключаются аргументами в панели Controls — так же, как их
   переключает composable usePaywall в приложении.
 */
@@ -18,7 +18,6 @@ const meta = {
     offersStatus: 'ready',
     offersError: '',
     selectedOfferId: 'yearly',
-    busy: false,
     purchaseStatus: 'idle',
     purchaseError: '',
     donePurchase: null,
@@ -31,8 +30,7 @@ const meta = {
     offersStatus: { control: 'select', options: ['loading', 'ready', 'error'] },
     offersError: { control: 'text', description: 'Текст ошибки загрузки тарифов' },
     selectedOfferId: { control: 'select', options: ['monthly', 'yearly', null] },
-    busy: { control: 'boolean', description: 'Идёт запрос: карточки, кнопка и ссылка недоступны' },
-    purchaseStatus: { control: 'select', options: ['idle', 'pending', 'error', 'success'] },
+    purchaseStatus: { control: 'select', options: ['idle', 'pending', 'success'] },
     purchaseError: { control: 'text', description: 'Текст ошибки покупки' },
     donePurchase: { control: 'object', description: 'Сохранённая покупка — состояние успеха' },
     restoreStatus: { control: 'select', options: ['idle', 'pending', 'found', 'not-found'] },
@@ -71,7 +69,6 @@ export const OffersError: Story = {
 export const PurchaseError: Story = {
   name: 'Ошибка покупки',
   args: {
-    purchaseStatus: 'error',
     purchaseError: 'Не удалось сохранить покупку. Попробуйте ещё раз.',
   },
 }

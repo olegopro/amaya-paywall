@@ -92,6 +92,30 @@ button:disabled {
   cursor: not-allowed;
 }
 
+/* Общее для экранов: заголовок и кнопка основного действия. Свои отступы
+   и расположение содержимого компоненты добавляют сами */
+.screen-title {
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.btn-primary {
+  width: 100%;
+  min-height: var(--tap-lg);
+  font-size: 17px;
+  font-weight: 800;
+  color: #fff;
+  background: linear-gradient(180deg, var(--brand) 0%, var(--brand-strong) 100%);
+  border-radius: var(--radius-pill);
+  box-shadow: var(--shadow-cta);
+  transition: transform 0.12s ease;
+}
+
+.btn-primary:active {
+  transform: scale(0.985);
+}
+
 /* Общий видимый фокус — экран должен быть проходим с клавиатуры и с экранным диктором */
 :focus-visible {
   outline: 3px solid var(--brand);

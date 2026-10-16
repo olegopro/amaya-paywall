@@ -30,7 +30,7 @@ npm run storybook    # витрина на http://localhost:6006
 | `POST /api/purchase` | `server/api/purchase.post.ts`: проверяет `offerId` по списку тарифов, 400 на чужой |
 | `POST /api/restore` | `server/api/restore.post.ts`: последняя покупка устройства |
 | База | `server/utils/db.ts`, таблица `purchases` создаётся сама |
-| Тарифы и устройство | `server/utils/offers.ts`, `server/utils/device.ts` (httpOnly-кука `device_id`), `server/middleware/device-id.ts` |
+| Тарифы и устройство | `shared/offers.ts` (один список для server routes и витрины), `server/utils/device.ts` (httpOnly-кука `device_id`) |
 | Витрина | `.storybook/`, `app/**/*.stories.ts` |
 
 Экран собран из презентационных компонентов (`props`/`emit`), поэтому в Storybook открывается

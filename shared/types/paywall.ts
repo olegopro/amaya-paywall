@@ -29,7 +29,8 @@ export interface Purchase {
 
 /** Состояния экрана: их показывает PaywallScreen и ими управляет composable */
 export type OffersStatus = 'loading' | 'ready' | 'error'
-export type PurchaseStatus = 'idle' | 'pending' | 'error' | 'success'
+/** Сбой покупки — это 'idle' плюс текст в purchaseError: отдельного состояния не нужно */
+export type PurchaseStatus = 'idle' | 'pending' | 'success'
 export type RestoreStatus = 'idle' | 'pending' | 'found' | 'not-found'
 
 export interface OffersResponse {
@@ -48,7 +49,5 @@ export interface RestoreResponse {
 
 /** Тело ошибки, которое отдаёт apiError из server route (server/utils/api-error.ts) */
 export interface ApiErrorBody {
-  statusCode?: number
-  statusMessage?: string
-  data?: { message?: string }
+  message?: string
 }

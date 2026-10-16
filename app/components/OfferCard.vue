@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import type { Offer } from '#shared/types/paywall'
-import { formatPrice } from '~/utils/format'
+import { formatPeriod, formatPrice } from '~/utils/format'
 
 /*
   Презентационная карточка тарифа: ничего не знает про API и стор —
@@ -18,7 +18,7 @@ const emit = defineEmits<{ select: [] }>()
 
 const priceLabel = computed(() => formatPrice(props.offer.price))
 
-const periodLabel = computed(() => (props.offer.period === 'year' ? 'в год' : 'в месяц'))
+const periodLabel = computed(() => formatPeriod(props.offer.period))
 
 /** Для годового тарифа цена в пересчёте на месяц — так выгода видна без калькулятора */
 const hintLabel = computed(() => {

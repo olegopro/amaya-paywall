@@ -10,7 +10,7 @@ import type {
 import OfferCard from '~/components/OfferCard.vue'
 import OfferCardSkeleton from '~/components/OfferCardSkeleton.vue'
 import PurchaseSuccess from '~/components/PurchaseSuccess.vue'
-import { formatDate, formatPrice } from '~/utils/format'
+import { formatDate, formatPeriod, formatPrice } from '~/utils/format'
 
 /*
   Экран оплаты целиком: hero, карточки тарифов, кнопка покупки и состояния.
@@ -22,8 +22,6 @@ const props = defineProps<{
   offersStatus: OffersStatus
   offersError: string
   selectedOfferId: string | null
-  /** Идёт запрос — покупка или восстановление; пока он не завершён, ничего не нажимается */
-  busy: boolean
   purchaseStatus: PurchaseStatus
   purchaseError: string
   donePurchase: Purchase | null
@@ -44,8 +42,32 @@ const selectedOffer = computed(
   () => props.offers.find((offer) => offer.id === props.selectedOfferId) ?? null,
 )
 
+/** Название тарифа по id: у покупки из БД есть только id */
+function titleOf(offerId: string): string {
+  return props.offers.find((offer) => offer.id === offerId)?.title ?? offerId
+}
+
 const isBuying = computed(() => props.purchaseStatus === 'pending')
-const canBuy = computed(() => props.offersStatus === 'ready' && selectedOffer.value !== null && !props.busy)
+/** Идёт запрос — покупка или восстановление; пока он не завершён, ничего не нажимается */
+const busy = computed(() => isBuying.value || props.restoreStatus === 'pending')
+const canBuy = computed(() => props.offersStatus === 'ready' && selectedOffer.value !== null && !busy.value)
+
+const ctaLabel = computed(() => {
+  if (isBuying.value) return 'Оформляем…'
+  if (props.offersStatus === 'loading') return 'Загружаем тарифы…'
+  if (props.offersStatus === 'error') return 'Тарифы недоступны'
+  if (!selectedOffer.value) return 'Выберите тариф'
+  return `Оформить за ${formatPrice(selectedOffer.value.price)}`
+})
+
+const restoreMessage = computed(() => {
+  const purchase = props.restoredPurchase
+  if (props.restoreStatus === 'found' && purchase) {
+    return `Покупка восстановлена: тариф «${titleOf(purchase.offerId)}» от ${formatDate(purchase.createdAt)}`
+  }
+  if (props.restoreStatus === 'not-found') return 'На этом устройстве покупок не найдено'
+  return ''
+})
 
 const groupRef = ref<HTMLElement | null>(null)
 
@@ -73,37 +95,12 @@ async function selectByArrow(event: KeyboardEvent) {
   await nextTick()
   groupRef.value?.querySelector<HTMLButtonElement>(`[data-offer-id="${next.id}"]`)?.focus()
 }
-
-const ctaLabel = computed(() => {
-  if (isBuying.value) return 'Оформляем…'
-  if (props.offersStatus === 'loading') return 'Загружаем тарифы…'
-  if (props.offersStatus === 'error') return 'Тарифы недоступны'
-  if (!selectedOffer.value) return 'Выберите тариф'
-  return `Оформить за ${formatPrice(selectedOffer.value.price)}`
-})
-
-/** Покупка на этом устройстве лежит в donePurchase — тариф ищем по её id */
-const doneOffer = computed(() => props.offers.find((offer) => offer.id === props.donePurchase?.offerId) ?? null)
-
-const restoredTitle = computed(() => {
-  const purchase = props.restoredPurchase
-  if (!purchase) return ''
-  return props.offers.find((offer) => offer.id === purchase.offerId)?.title ?? purchase.offerId
-})
-
-const restoreMessage = computed(() => {
-  if (props.restoreStatus === 'found' && props.restoredPurchase) {
-    return `Покупка восстановлена: тариф «${restoredTitle.value}» от ${formatDate(props.restoredPurchase.createdAt)}`
-  }
-  if (props.restoreStatus === 'not-found') return 'На этом устройстве покупок не найдено'
-  return ''
-})
 </script>
 
 <template>
   <PurchaseSuccess
     v-if="purchaseStatus === 'success' && donePurchase"
-    :offer="doneOffer"
+    :offer-title="titleOf(donePurchase.offerId)"
     :purchase="donePurchase"
     @reset="emit('reset')"
   />
@@ -115,7 +112,7 @@ const restoreMessage = computed(() => {
           <path d="M12 2.6 14.6 9.4 21.4 12 14.6 14.6 12 21.4 9.4 14.6 2.6 12 9.4 9.4Z" fill="#fff" />
         </svg>
       </div>
-      <h1 class="title">Открой полную игру</h1>
+      <h1 class="title screen-title">Открой полную игру</h1>
       <p class="lead">Все уровни, герои и награды. Без рекламы и без ожидания.</p>
     </header>
 
@@ -164,24 +161,24 @@ const restoreMessage = computed(() => {
         {{ restoreMessage }}
       </p>
 
-      <button type="button" class="cta" :disabled="!canBuy" :aria-busy="isBuying" @click="emit('purchase')">
+      <button
+        type="button"
+        class="cta btn-primary"
+        :disabled="!canBuy"
+        :aria-busy="isBuying"
+        @click="emit('purchase')"
+      >
         <span v-if="isBuying" class="spinner" aria-hidden="true" />
         {{ ctaLabel }}
       </button>
 
       <p v-if="selectedOffer" class="terms">
-        {{ selectedOffer.title }} · {{ formatPrice(selectedOffer.price) }}
-        {{ selectedOffer.period === 'year' ? 'в год' : 'в месяц' }}
+        {{ selectedOffer.title }} · {{ formatPrice(selectedOffer.price) }} {{ formatPeriod(selectedOffer.period) }}
       </p>
 
       <p v-if="restoreError" class="alert" role="alert">{{ restoreError }}</p>
 
-      <button
-        type="button"
-        class="restore"
-        :disabled="busy || offersStatus !== 'ready'"
-        @click="emit('restore')"
-      >
+      <button type="button" class="restore" :disabled="busy || offersStatus !== 'ready'" @click="emit('restore')">
         {{ restoreStatus === 'pending' ? 'Восстанавливаем…' : 'Восстановить покупки' }}
       </button>
 
@@ -225,9 +222,6 @@ const restoreMessage = computed(() => {
 
       .title {
         margin: 18px 0 0;
-        font-size: 26px;
-        font-weight: 800;
-        letter-spacing: -0.02em;
         line-height: 1.2;
       }
 
@@ -241,12 +235,8 @@ const restoreMessage = computed(() => {
       }
     }
 
-    .offers {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
-
+    // Список карточек — та же колонка с зазором, что и заглушки в секции
+    .offers,
     .offer-list {
       display: flex;
       flex-direction: column;
@@ -331,22 +321,11 @@ const restoreMessage = computed(() => {
 
     .cta {
       display: flex;
-      width: 100%;
-      min-height: var(--tap-lg);
       align-items: center;
       justify-content: center;
       gap: 10px;
-      font-size: 17px;
-      font-weight: 800;
-      color: #fff;
-      background: linear-gradient(180deg, var(--brand) 0%, var(--brand-strong) 100%);
-      border-radius: var(--radius-pill);
-      box-shadow: var(--shadow-cta);
+      // Плавно гаснет и кнопка, когда её выключают на время запроса
       transition: transform 0.12s ease, opacity 0.15s ease;
-
-      &:not(:disabled):active {
-        transform: scale(0.985);
-      }
 
       &:disabled {
         opacity: 0.55;

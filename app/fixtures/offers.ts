@@ -1,31 +1,12 @@
-import type { Offer, Purchase } from '#shared/types/paywall'
+import { offers } from '#shared/offers'
+import type { Purchase } from '#shared/types/paywall'
 
 /*
-  Данные для историй Storybook. Повторяют ответы server routes
-  (server/utils/offers.ts и запись из таблицы purchases): у витрины нет
-  ни Nuxt, ни сети, поэтому тарифы и покупка заданы здесь.
+  Данные для историй Storybook: у витрины нет ни Nuxt, ни сети. Тарифы берутся те же,
+  что отдаёт GET /api/offers (shared/offers.ts), покупка — образец строки из purchases.
 */
 
-export const offersFixture: Offer[] = [
-  {
-    id: 'monthly',
-    title: 'Месяц',
-    period: 'month',
-    price: 299,
-    months: 1,
-    recommended: false,
-    savingsPercent: null,
-  },
-  {
-    id: 'yearly',
-    title: 'Год',
-    period: 'year',
-    price: 1490,
-    months: 12,
-    recommended: true,
-    savingsPercent: 58,
-  },
-]
+export const offersFixture = offers
 
 export const purchaseFixture: Purchase = {
   id: 12,

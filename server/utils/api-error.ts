@@ -1,10 +1,9 @@
 /**
- * Ошибка server route: текст для пользователя кладётся и в `message` (его видно в логах
- * и на странице ошибки Nuxt), и в `data.message` — это поле читает клиент
- * (app/utils/api-error.ts).
+ * Ошибка server route: текст для пользователя уезжает в `message` — оттуда его читает
+ * клиент (app/utils/api-error.ts), там же его видно в логах.
  *
- * Статус-текст короткий и латиницей: он уезжает в HTTP-строку ответа, где кириллица недопустима.
+ * Статус-текст короткий и латиницей: он попадает в HTTP-строку ответа, где кириллица недопустима.
  */
 export function apiError(status: number, message: string, statusText = 'Bad request') {
-  return createError({ status, message, statusText, data: { message } })
+  return createError({ status, message, statusText })
 }

@@ -1,15 +1,12 @@
 <script setup lang="ts">
-import PaywallScreen from '~/components/PaywallScreen.vue'
-import { usePaywall } from '~/composables/usePaywall'
-
 // Страница отвечает за данные: composable ходит в server routes,
 // а PaywallScreen только рисует переданное состояние.
+// Страницу собирает Nuxt, поэтому PaywallScreen и usePaywall приходят автоимпортом.
 const {
   offers,
   offersStatus,
   offersError,
   selectedOfferId,
-  isBusy,
   purchaseStatus,
   purchaseError,
   donePurchase,
@@ -30,7 +27,6 @@ const {
     :offers-status="offersStatus"
     :offers-error="offersError"
     :selected-offer-id="selectedOfferId"
-    :busy="isBusy"
     :purchase-status="purchaseStatus"
     :purchase-error="purchaseError"
     :done-purchase="donePurchase"
