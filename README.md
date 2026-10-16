@@ -4,8 +4,8 @@
 ссылка «Восстановить покупки». Frontend и server routes живут в одном приложении
 Nuxt 4 (TypeScript, strict).
 
-- Живой сервис: `<ссылка появится после деплоя>`
-- Витрина экрана: `/storybook/` на том же деплое
+- Живой сервис: https://amaya-paywall-sepia.vercel.app
+- Витрина экрана: https://amaya-paywall-sepia.vercel.app/storybook/
 
 ## Запуск локально
 
@@ -50,14 +50,15 @@ API:
 ## Почему Vercel и Neon
 
 - server routes на Vercel работают без настройки — Nitro сам определяет пресет, деплой из панели;
-- база создаётся там же: Vercel → Storage → Create Database → Neon, переменную `DATABASE_URL`
-  интеграция подставляет в проект сама;
+- база создана там же: Vercel → Storage → Neon (бесплатный план, регион iad1), переменную
+  `DATABASE_URL` интеграция подключила к проекту сама;
 - драйвер `@neondatabase/serverless` ходит в Postgres по HTTP — в serverless обычное
   TCP-соединение не переживает запрос;
 - таблица `purchases` создаётся при первом обращении (`CREATE TABLE IF NOT EXISTS`), миграций нет.
 
-Деплой: репозиторий импортируется в Vercel (Nuxt определится сам, команда сборки —
-`npm run build`), затем в проекте подключается база из Storage, и проект пересобирается.
+Деплой: проект собран на Vercel из этого репозитория (Nuxt определился сам, команда сборки —
+`npm run build`), база подключена из Storage. Тестовая покупка после проверки видна
+в таблице `purchases` в Neon.
 
 ## Почему вместо Figma — Storybook
 
