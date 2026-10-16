@@ -18,6 +18,7 @@ const meta = {
     offersStatus: 'ready',
     offersError: '',
     selectedOfferId: 'yearly',
+    busy: false,
     purchaseStatus: 'idle',
     purchaseError: '',
     donePurchase: null,
@@ -30,6 +31,7 @@ const meta = {
     offersStatus: { control: 'select', options: ['loading', 'ready', 'error'] },
     offersError: { control: 'text', description: 'Текст ошибки загрузки тарифов' },
     selectedOfferId: { control: 'select', options: ['monthly', 'yearly', null] },
+    busy: { control: 'boolean', description: 'Идёт запрос: карточки, кнопка и ссылка недоступны' },
     purchaseStatus: { control: 'select', options: ['idle', 'pending', 'error', 'success'] },
     purchaseError: { control: 'text', description: 'Текст ошибки покупки' },
     donePurchase: { control: 'object', description: 'Сохранённая покупка — состояние успеха' },
@@ -71,6 +73,13 @@ export const PurchaseError: Story = {
   args: {
     purchaseStatus: 'error',
     purchaseError: 'Не удалось сохранить покупку. Попробуйте ещё раз.',
+  },
+}
+
+export const RestoreError: Story = {
+  name: 'Ошибка восстановления',
+  args: {
+    restoreError: 'Не удалось проверить покупки. Попробуйте ещё раз.',
   },
 }
 

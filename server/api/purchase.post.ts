@@ -5,22 +5,17 @@ import type { PurchaseResponse } from '#shared/types/paywall'
  * Реального платёжного SDK нет: деньги не списываются, ключи не нужны.
  */
 export default defineEventHandler(async (event): Promise<PurchaseResponse> => {
-  // Тело проверяет readValidatedBody: пустое тело или offerId не строкой — сразу 400.
-  // Текст для пользователя берётся из брошенной ошибки, её message обёртка сохраняет
+  // Валидатор только приводит тело к одной форме: пустое тело и не-строка дают пустой offerId,
+  // а разбирается с ним та же ветка, что и с чужим тарифом — один путь ошибок
   const { offerId } = await readValidatedBody(event, (body: unknown) => {
     const value = (body as { offerId?: unknown } | null)?.offerId
-
-    if (typeof value !== 'string' || value.length === 0) {
-      throw apiError(400, 'Не удалось прочитать тариф. Обновите экран и попробуйте снова.')
-    }
-
-    return { offerId: value }
+    return { offerId: typeof value === 'string' ? value : '' }
   })
 
   // Тариф сверяется со списком на сервере: id, которого тут нет, — ошибка клиента
   const offer = findOffer(offerId)
   if (!offer) {
-    throw apiError(400, 'Такого тарифа нет. Обновите экран и попробуйте снова.')
+    throw apiError(400, 'Такого тарифа нет. Обновите экран и попробуйте снова.', 'Unknown offer')
   }
 
   const deviceId = ensureDeviceId(event)
@@ -30,6 +25,6 @@ export default defineEventHandler(async (event): Promise<PurchaseResponse> => {
     return { purchase }
   } catch (error) {
     console.error('[purchase] не удалось записать покупку в БД', error)
-    throw apiError(500, 'Не удалось сохранить покупку. Попробуйте ещё раз.')
+    throw apiError(500, 'Не удалось сохранить покупку. Попробуйте ещё раз.', 'Purchase failed')
   }
 })

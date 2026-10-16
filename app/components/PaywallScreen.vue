@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, nextTick, ref } from 'vue'
 import type {
   Offer,
   OffersStatus,
@@ -22,6 +22,8 @@ const props = defineProps<{
   offersStatus: OffersStatus
   offersError: string
   selectedOfferId: string | null
+  /** Идёт запрос — покупка или восстановление; пока он не завершён, ничего не нажимается */
+  busy: boolean
   purchaseStatus: PurchaseStatus
   purchaseError: string
   donePurchase: Purchase | null
@@ -43,11 +45,34 @@ const selectedOffer = computed(
 )
 
 const isBuying = computed(() => props.purchaseStatus === 'pending')
-/** Пока идёт запрос — покупка или восстановление — кнопка недоступна: две операции разом не запускаются */
-const canBuy = computed(() => props.offersStatus === 'ready'
-  && selectedOffer.value !== null
-  && !isBuying.value
-  && props.restoreStatus !== 'pending')
+const canBuy = computed(() => props.offersStatus === 'ready' && selectedOffer.value !== null && !props.busy)
+
+const groupRef = ref<HTMLElement | null>(null)
+
+/** Шаг выбора по стрелкам: вправо и вниз — следующий тариф, влево и вверх — предыдущий */
+const ARROW_STEPS: Record<string, number> = { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1 }
+
+/**
+ * Стрелки выбирают соседний тариф по кругу и переводят на него фокус — это часть
+ * поведения радиогруппы ARIA, без неё карточки с клавиатуры не переключаются.
+ */
+async function selectByArrow(event: KeyboardEvent) {
+  const step = ARROW_STEPS[event.key]
+  if (!step || props.offers.length === 0) return
+
+  event.preventDefault()
+
+  const current = props.offers.findIndex((offer) => offer.id === props.selectedOfferId)
+  const next = props.offers[(current + step + props.offers.length) % props.offers.length]
+  if (!next) return
+
+  emit('select', next.id)
+
+  // tabindex переезжает на выбранную карточку вместе с состоянием, поэтому фокус ставится
+  // после обновления props
+  await nextTick()
+  groupRef.value?.querySelector<HTMLButtonElement>(`[data-offer-id="${next.id}"]`)?.focus()
+}
 
 const ctaLabel = computed(() => {
   if (isBuying.value) return 'Оформляем…'
@@ -94,7 +119,7 @@ const restoreMessage = computed(() => {
       <p class="lead">Все уровни, герои и награды. Без рекламы и без ожидания.</p>
     </header>
 
-    <section class="offers" role="radiogroup" aria-label="Тарифы">
+    <section class="offers">
       <template v-if="offersStatus === 'loading'">
         <OfferCardSkeleton />
         <OfferCardSkeleton />
@@ -111,16 +136,25 @@ const restoreMessage = computed(() => {
         <button type="button" class="retry" @click="emit('retry')">Повторить</button>
       </div>
 
-      <template v-else>
+      <div
+        v-else
+        ref="groupRef"
+        class="offer-list"
+        role="radiogroup"
+        aria-label="Тарифы"
+        @keydown="selectByArrow"
+      >
         <OfferCard
           v-for="offer in offers"
           :key="offer.id"
           :offer="offer"
           :selected="offer.id === selectedOfferId"
-          :disabled="isBuying || restoreStatus === 'pending'"
+          :disabled="busy"
+          :tabindex="offer.id === selectedOfferId ? 0 : -1"
+          :data-offer-id="offer.id"
           @select="emit('select', offer.id)"
         />
-      </template>
+      </div>
     </section>
 
     <footer class="footer">
@@ -145,7 +179,7 @@ const restoreMessage = computed(() => {
       <button
         type="button"
         class="restore"
-        :disabled="restoreStatus === 'pending' || purchaseStatus === 'pending' || offersStatus !== 'ready'"
+        :disabled="busy || offersStatus !== 'ready'"
         @click="emit('restore')"
       >
         {{ restoreStatus === 'pending' ? 'Восстанавливаем…' : 'Восстановить покупки' }}
@@ -208,6 +242,12 @@ const restoreMessage = computed(() => {
     }
 
     .offers {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .offer-list {
       display: flex;
       flex-direction: column;
       gap: 12px;

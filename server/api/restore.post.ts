@@ -12,6 +12,6 @@ export default defineEventHandler(async (event): Promise<RestoreResponse> => {
     return { restored: purchase !== null, purchase }
   } catch (error) {
     console.error('[restore] не удалось прочитать покупки устройства', error)
-    throw apiError(500, 'Не удалось проверить покупки. Попробуйте ещё раз.')
+    throw apiError(500, 'Не удалось проверить покупки. Попробуйте ещё раз.', 'Restore failed')
   }
 })

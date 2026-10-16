@@ -24,12 +24,15 @@ function cookieOptions() {
 
 /**
  * Возвращает id устройства: из контекста запроса, из куки или новый — новый сразу
- * уезжает клиенту в set-cookie. Кука принимается, только если это UUID: значение
- * мог прислать кто угодно, а по нему ищутся покупки.
+ * уезжает клиенту в set-cookie.
+ *
+ * Проверка формата куки — гигиена, а не защита: произвольная строка в БД не уедет,
+ * но чужой валидный UUID проверку пройдёт. В контексте запроса значение уже проверено
+ * при выдаче, повторно его смотреть незачем.
  */
 export function ensureDeviceId(event: H3Event): string {
   const fromContext = event.context.deviceId
-  if (typeof fromContext === 'string' && UUID.test(fromContext)) return fromContext
+  if (typeof fromContext === 'string') return fromContext
 
   const fromCookie = getCookie(event, DEVICE_COOKIE)
   const deviceId = fromCookie && UUID.test(fromCookie) ? fromCookie : randomUUID()

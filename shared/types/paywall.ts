@@ -46,7 +46,7 @@ export interface RestoreResponse {
   purchase: Purchase | null
 }
 
-/** Тело ошибки, которое отдаёт createError из server route */
+/** Тело ошибки, которое отдаёт apiError из server route (server/utils/api-error.ts) */
 export interface ApiErrorBody {
   statusCode?: number
   statusMessage?: string

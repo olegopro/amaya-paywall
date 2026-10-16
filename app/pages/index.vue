@@ -9,6 +9,7 @@ const {
   offersStatus,
   offersError,
   selectedOfferId,
+  isBusy,
   purchaseStatus,
   purchaseError,
   donePurchase,
@@ -29,6 +30,7 @@ const {
     :offers-status="offersStatus"
     :offers-error="offersError"
     :selected-offer-id="selectedOfferId"
+    :busy="isBusy"
     :purchase-status="purchaseStatus"
     :purchase-error="purchaseError"
     :done-purchase="donePurchase"

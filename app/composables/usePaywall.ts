@@ -62,9 +62,11 @@ export function usePaywall() {
   function selectOffer(id: string) {
     if (isBusy.value) return
     chosenOfferId.value = id
-    // Прошлая ошибка относится к другому тарифу — после смены выбора она только путает
-    purchaseStatus.value = 'idle'
+    // Прошлые ошибки относятся к другому тарифу и к прошлому действию — после смены
+    // выбора они только путают
+    if (purchaseStatus.value === 'error') purchaseStatus.value = 'idle'
     purchaseError.value = ''
+    restoreError.value = ''
   }
 
   async function buySubscription() {
@@ -94,6 +96,10 @@ export function usePaywall() {
     restoreStatus.value = 'pending'
     restoreError.value = ''
     restoredPurchase.value = null
+    // Неудачная покупка к восстановлению отношения не имеет: иначе на экране разом
+    // висели бы ошибка покупки и сообщение о восстановлении
+    if (purchaseStatus.value === 'error') purchaseStatus.value = 'idle'
+    purchaseError.value = ''
 
     try {
       const response = await $fetch<RestoreResponse>('/api/restore', { method: 'POST' })
@@ -122,6 +128,7 @@ export function usePaywall() {
     offersStatus,
     offersError,
     selectedOfferId,
+    isBusy,
     purchaseStatus,
     purchaseError,
     donePurchase,
